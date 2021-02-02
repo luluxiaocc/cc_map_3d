@@ -1,6 +1,6 @@
 <template>
   <div id="app">
-    <ccMap3d></ccMap3d>
+    <ccMap3d id="map"></ccMap3d>
   </div>
 </template>
 
@@ -16,6 +16,9 @@ export default {
 </script>
 
 <style lang="scss">
-#app {
+#map {
+  width: 1000px;
+  height: 700px;
+  margin: 0 auto;
 }
 </style>
