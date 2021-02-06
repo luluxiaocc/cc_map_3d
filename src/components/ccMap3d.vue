@@ -5,6 +5,12 @@
 <script>
 import * as THREE from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
+import earthConfig from "../config/earth.config";
+import envConifg from "../config/env.config";
+import countryLine from "../utils/countryLine";
+import countryMesh from "../utils/countryMesh";
+import choosePoint from "../utils/choosePoint";
+import worldGeo from "../config/world.geo.js";
 
 export default {
   name: "ccMap3d",
@@ -18,26 +24,23 @@ export default {
       camera: null,
       scene: null,
       orbitControls: null,
-      axisHelperz: null,
+      axisHelper: new THREE.AxisHelper(260),
       object: new THREE.Object3D(),
       textureLoader: new THREE.TextureLoader(),
     };
   },
   methods: {
     initBg() {
-      const texture = this.textureLoader.load(
-        require("../assets/images/ball.jpg")
-      );
-      const sphereGeometry = new THREE.SphereGeometry(2000, 50, 50);
+      const texture = this.textureLoader.load(envConifg.bg);
+      const sphereGeometry = new THREE.SphereGeometry(1000, 50, 50);
       sphereGeometry.scale(-1, 1, 1);
       const sphereMaterial = new THREE.MeshBasicMaterial({ map: texture });
       const sphere = new THREE.Mesh(sphereGeometry, sphereMaterial);
       this.scene.add(sphere);
+      this.scene.add(this.object);
     },
     initAxisHelper() {
-      this.axisHelper = new THREE.AxisHelper(260);
       this.object.add(this.axisHelper);
-      this.scene.add(this.object);
     },
     initLight() {
       const ambientLight = new THREE.AmbientLight("white");
@@ -56,31 +59,48 @@ export default {
       this.orbitControls = orbitControls;
     },
     initSprite() {
-      var R = 80; //地球半径
-      var texture = this.textureLoader.load(
-        require("../assets/images/sprite-bg.png")
-      );
-      var spriteMaterial = new THREE.SpriteMaterial({
-        map: texture, //设置精灵纹理贴图
-        transparent: true, //开启透明
-        opacity: 0.5, //可以通过透明度整体调节光圈
+      const texture = this.textureLoader.load(earthConfig.spriteBg);
+      const spriteMaterial = new THREE.SpriteMaterial({
+        map: texture,
+        transparent: true,
+        opacity: 0.5,
       });
-      // 创建表示地球光圈的精灵模型
-      var sprite = new THREE.Sprite(spriteMaterial);
-      sprite.scale.set(R * 3.0, R * 3.0, 1); //适当缩放精灵
+      const sprite = new THREE.Sprite(spriteMaterial);
+      sprite.scale.set(earthConfig.r * 3.0, earthConfig.r * 3.0, 1);
       this.scene.add(sprite);
     },
+    // 绘制地球
+    initEarth() {
+      const R = earthConfig.r;
+      var earthGroup = new THREE.Group();
+      worldGeo.features.forEach((country) => {
+        // 单一轮廓
+        if (country.geometry.type === "Polygon") {
+          country.geometry.coordinates = [country.geometry.coordinates];
+        }
+        var line = countryLine(R * 1.002, country.geometry.coordinates);
+        var mesh = countryMesh(
+          R * 1.001,
+          country.geometry.coordinates,
+          country.id
+        );
+        earthGroup.add(line);
+        earthGroup.add(mesh);
+      });
+      this.scene.add(earthGroup);
+      // 绑定事件
+      choosePoint(this.camera, earthGroup.children, this.renderer.domElement);
+    },
     initEarthBg() {
-      const texture = this.textureLoader.load(
-        require("../assets/images/earth-bg.png")
-      );
+      const texture = this.textureLoader.load(earthConfig.earthBg);
       // 传入地球半径
-      const geometry = new THREE.SphereBufferGeometry(80, 40, 40);
+      const geometry = new THREE.SphereBufferGeometry(earthConfig.r, 40, 40);
       const material = new THREE.MeshLambertMaterial({
         map: texture,
       });
       const mesh = new THREE.Mesh(geometry, material);
       this.object.add(mesh);
+      // return mesh;
     },
     initScene() {
       this.scene = new THREE.Scene();
@@ -90,9 +110,11 @@ export default {
         45,
         this.mapDom.clientWidth / this.mapDom.clientHeight,
         1,
-        20000
+        2000
       );
-      this.camera.position.z = 300;
+      this.camera.position.z = -300;
+      this.camera.position.y = 140;
+      this.camera.position.x = -80;
       this.camera.up.set(0, 1, 0);
       this.camera.lookAt(0, 0, 0);
     },
@@ -102,7 +124,7 @@ export default {
       });
       this.mapDom = this.$refs.map;
       this.renderer.setSize(this.mapDom.clientWidth, this.mapDom.clientHeight);
-      this.renderer.setClearColor(0xffffff, 1.0); // config
+      this.renderer.setClearColor(envConifg.color, 1.0);
       this.mapDom.appendChild(this.renderer.domElement);
     },
     glRender() {
@@ -116,6 +138,7 @@ export default {
     this.initScene();
     this.initOrbitControls();
     this.initEarthBg();
+    this.initEarth();
     this.initLight();
     this.initSprite();
     this.initBg();
@@ -127,8 +150,8 @@ export default {
 
 <style scoped lang="scss">
 .map {
+  box-sizing: border-box;
   width: 100%;
   height: 100%;
-  box-sizing: border-box;
 }
 </style>

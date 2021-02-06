@@ -17,8 +17,9 @@ export default {
 
 <style lang="scss">
 #map {
-  width: 1000px;
+  width: 800px;
   height: 700px;
   margin: 0 auto;
+  margin-top: 500px;
 }
 </style>
