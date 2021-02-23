@@ -13,6 +13,8 @@ import choosePoint from "../utils/choosePoint";
 import worldGeo from "../config/world.geo.js";
 import countryNameObj from "../config/country.name";
 import { tag, labelRenderer } from "../utils/css2DObject";
+import spot from "../utils/spot";
+import { flyArc } from "../utils/curve";
 
 export default {
   name: "ccMap3d",
@@ -111,7 +113,7 @@ export default {
       const material = new THREE.MeshLambertMaterial({
         map: texture,
         transparent: true,
-        opacity: 0.8,
+        opacity: 0.2, //0.8
       });
       return new THREE.Mesh(geometry, material);
       // this.object.add(mesh);
@@ -126,6 +128,7 @@ export default {
         1,
         2000
       );
+      // 朝向中国
       this.camera.position.z = -300;
       this.camera.position.y = 140;
       this.camera.position.x = -80;
@@ -154,6 +157,17 @@ export default {
       this.renderer.render(this.scene, this.camera);
       requestAnimationFrame(this.glRender);
     },
+    markSpot() {
+      this.object.add(spot(116.46, 39.92));
+      this.object.add(spot(119.46, 69.92));
+
+      // this.object.add(flyArc(116.46, 39.92, 119.46, 69.92));
+      // this.object.add(flyArc(119.46, 69.92, 116.46, 39.92));
+      // this.object.add(flyArc(119.46, 69.92, 116.46, 39.92));
+      console.log(flyArc(112.45, 34.62, 51, 35));
+      this.object.add(flyArc(112.45, 34.62, 51, 35));
+      // this.object.add(flyArc(0, 90, 180, 0));
+    },
   },
   mounted() {
     this.initTHREE();
@@ -168,6 +182,8 @@ export default {
     this.initAxisHelper();
     this.initPopup();
     this.glRender();
+    // 打点
+    this.markSpot();
   },
 };
 </script>
